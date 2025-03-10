@@ -1,26 +1,27 @@
 <?php
 
-use Livewire\Volt\Volt;
+namespace Tests\Feature\Auth;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+use Livewire\Volt\Volt;
 
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
 
-    $response->assertStatus(200);
+    $response
+        ->assertOk()
+        ->assertSeeVolt('pages.auth.register');
 });
 
 test('new users can register', function () {
-    $response = Volt::test('auth.register')
+    $component = Volt::test('pages.auth.register')
         ->set('name', 'Test User')
         ->set('email', 'test@example.com')
         ->set('password', 'password')
-        ->set('password_confirmation', 'password')
-        ->call('register');
+        ->set('password_confirmation', 'password');
 
-    $response
-        ->assertHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+    $component->call('register');
+
+    $component->assertRedirect(route('dashboard', absolute: false));
 
     $this->assertAuthenticated();
 });
