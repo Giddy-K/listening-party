@@ -5,7 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Awwdio - Let's Listen Together</title>
+    <title>TogetherCast.io — Listen Together</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
