@@ -157,7 +157,7 @@ new class extends Component {
                             class="flex items-center justify-between p-4 border-b border-gray-200 hover:bg-gray-50 transition-all duration-150 ease-in-out">
                             <a href="{{ route('parties.show', $listeningParty) }}" class="flex items-center space-x-4 flex-1 min-w-0">
                                 <div class="flex-shrink-0">
-                                    <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}"
+                                    <x-avatar src="{{ $listeningParty->episode->podcast?->artwork_url ?? '' }}"
                                         size="xl" rounded="sm" alt="Podcast Artwork" />
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -175,7 +175,7 @@ new class extends Component {
                                         <p class="max-w-xs text-sm truncate text-slate-600">
                                             {{ $listeningParty->episode->title }}</p>
                                         <p class="text-[0.7rem] tracking-tighter uppercase text-slate-400">
-                                            {{ $listeningParty->podcast->title }}</p>
+                                            {{ $listeningParty->podcast?->title }}</p>
                                     </div>
                                     <div class="mt-1 text-xs text-slate-600" x-data="{
                                         startTime: {{ $listeningParty->start_time->timestamp }},
