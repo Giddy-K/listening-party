@@ -90,7 +90,9 @@ new class extends Component {
     public function with()
     {
         return [
-            'messages' => $this->listeningParty->messages()->with('user')->orderBy('created_at', 'asc')->get(),
+            'messages' => $this->listeningParty->end_time
+                ? $this->listeningParty->messages()->with('user')->orderBy('created_at', 'asc')->get()
+                : collect(),
         ];
     }
 }; ?>
@@ -306,7 +308,7 @@ new class extends Component {
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
-                        <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}" size="xl"
+                        <x-avatar src="{{ $listeningParty->episode->podcast?->artwork_url ?? '' }}" size="xl"
                             rounded="sm" alt="Podcast Artwork" />
                     </div>
                     <div class="flex-1 min-w-0">
@@ -316,7 +318,7 @@ new class extends Component {
                             <p class="max-w-xs text-sm truncate text-slate-600">
                                 {{ $listeningParty->episode->title }}</p>
                             <p class="text-[0.7rem] tracking-tighter uppercase text-slate-400">
-                                {{ $listeningParty->episode->podcast->title }}</p>
+                                {{ $listeningParty->episode->podcast?->title }}</p>
                         </div>
                     </div>
                 </div>
@@ -379,7 +381,7 @@ new class extends Component {
                             </div>
                             <div class="flex items-center mb-6 space-x-4">
                                 <div class="flex-shrink-0">
-                                    <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}" size="xl"
+                                    <x-avatar src="{{ $listeningParty->episode->podcast?->artwork_url ?? '' }}" size="xl"
                                         rounded="sm" alt="Podcast Artwork" />
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -388,7 +390,7 @@ new class extends Component {
                                     <p class="text-sm truncate text-slate-600">{{ $listeningParty->episode->title }}
                                     </p>
                                     <p class="text-xs tracking-tighter uppercase text-slate-400">
-                                        {{ $listeningParty->episode->podcast->title }}
+                                        {{ $listeningParty->episode->podcast?->title }}
                                     </p>
                                 </div>
                             </div>
