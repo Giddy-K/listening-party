@@ -38,7 +38,7 @@ new class extends Component {
     public function with()
     {
         return [
-            'listeningParties' => ListeningParty::where('is_active', true)->whereNotNull('end_time')->orderBy('start_time', 'asc')->with('episode.podcast')->get(),
+            'listeningParties' => ListeningParty::where('is_active', true)->whereNotNull('end_time')->where('end_time', '>', now())->orderBy('start_time', 'asc')->with('episode.podcast')->get(),
         ];
     }
 
@@ -49,13 +49,8 @@ new class extends Component {
 
                 <div class="flex items-center justify-center space-x-8">
                     <div class="relative flex items-center justify-center w-16 h-16">
-                        <span
-                            class="absolute inline-flex rounded-full opacity-75 size-10 bg-emerald-400 animate-ping"></span>
-                        <span
-                            class="relative inline-flex items-center justify-center text-2xl font-bold text-white rounded-full size-12 bg-emerald-500">
-                            🫶
-                            </svg>
-                        </span>
+                        <span class="absolute inline-flex rounded-full opacity-50 size-14 bg-emerald-400 animate-ping"></span>
+                        <img src="/logo.png" class="relative size-12">
                     </div>
 
             </div>
@@ -87,8 +82,10 @@ new class extends Component {
             <h3 class="mb-4 font-serif text-[0.9rem] font-bold">Upcoming Listening Parties</h3>
             <div class="bg-white rounded-lg shadow-lg">
                 @if ($listeningParties->isEmpty())
-                    <div class="flex items-center justify-center p-6 font-serif text-sm">No awwdio listening parties
-                        started yet... 😔</div>
+                    <div class="flex flex-col items-center justify-center gap-2 p-6 font-serif text-sm text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-slate-300"><path stroke-linecap="round" stroke-linejoin="round" d="M15.182 16.318A4.486 4.486 0 0 0 12.016 15a4.486 4.486 0 0 0-3.198 1.318M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" /></svg>
+                        No listening parties started yet.
+                    </div>
                 @else
                     @foreach ($listeningParties as $listeningParty)
                         <div wire:key="{{ $listeningParty->id }}">
