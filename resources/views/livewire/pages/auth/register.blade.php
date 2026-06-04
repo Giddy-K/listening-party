@@ -31,7 +31,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
         Auth::login($user);
 
-        $this->redirect(session()->pull('auth_redirect', route('home', absolute: false)), navigate: true);
+        $this->redirect(session()->pull('auth_redirect', route('dashboard', absolute: false)), navigate: true);
     }
 }; ?>
 
