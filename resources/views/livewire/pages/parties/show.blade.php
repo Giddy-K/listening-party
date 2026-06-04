@@ -66,6 +66,12 @@ new class extends Component {
         ];
     }
 
+    public function finish(): void
+    {
+        $this->listeningParty->update(['is_active' => false]);
+        $this->isFinished = true;
+    }
+
     public function mount(ListeningParty $listeningParty)
     {
         if ($this->listeningParty->end_time && $this->listeningParty->end_time->isPast()) {
@@ -99,10 +105,12 @@ new class extends Component {
     isLoading: true,
     isLive: false,
     isPlaying: false,
+    playBlocked: false,
     countdownText: '',
     isReady: false,
     audioMetadataLoaded: false,
     currentTime: 0,
+    audioDuration: 0,
     startTimestamp: {{ $listeningParty->start_time->timestamp }},
     endTimestamp: {{ $listeningParty->end_time ? $listeningParty->end_time->timestamp : 'null' }},
     copyNotification: false,
@@ -131,8 +139,7 @@ new class extends Component {
         this.audio.addEventListener('loadedmetadata', () => {
             this.isLoading = false;
             this.audioMetadataLoaded = true;
-            console.log('Audio duration after metadata loaded:', this.audio.duration);
-
+            this.audioDuration = this.audio.duration;
             this.checkLiveStatus();
         });
 
@@ -159,8 +166,7 @@ new class extends Component {
     },
 
     finishListeningParty() {
-        $wire.isFinished = true;
-        $wire.$refresh();
+        $wire.finish();
         this.isPlaying = false;
         if (this.audio) {
             this.audio.pause();
@@ -173,13 +179,16 @@ new class extends Component {
     },
 
     checkLiveStatus() {
+        if (!this.audio && this.$refs.audioPlayer) {
+            this.initializeAudioPlayer();
+        }
         const now = Math.floor(Date.now() / 1000);
         const timeUntilStart = this.startTimestamp - now;
 
         if (timeUntilStart <= 0) {
             this.isLive = true;
             this.countdownText = 'Live';
-            if (this.audio && !this.isPlaying && !this.isFinished) {
+            if (this.audio && !this.isPlaying && !this.isFinished && !this.playBlocked) {
                 this.playAudio();
             }
         } else {
@@ -192,19 +201,26 @@ new class extends Component {
     },
 
     playAudio() {
-        if (!this.audio) return;
+        const audio = this.$refs.audioPlayer || this.audio;
+        if (!audio) return;
+        this.audio = audio;
         const now = Math.floor(Date.now() / 1000);
         const elapsedTime = Math.max(0, now - this.startTimestamp);
-        this.audio.currentTime = elapsedTime;
-        this.audio.play().catch(error => {
+        audio.currentTime = elapsedTime;
+        audio.play().catch(error => {
             console.error('Playback failed:', error);
             this.isPlaying = false;
             this.isReady = false;
+            this.playBlocked = true;
         });
     },
 
     joinAndBeReady() {
         this.isReady = true;
+        this.playBlocked = false;
+        if (!this.audio && this.$refs.audioPlayer) {
+            this.initializeAudioPlayer();
+        }
         if (this.isLive && this.audio && !this.isFinished) {
             this.playAudio();
         }
@@ -230,18 +246,13 @@ new class extends Component {
             <div class="w-full max-w-2xl p-8 mx-8 bg-white rounded-lg shadow-lg">
                 <div class="flex items-center justify-center space-x-8">
                     <div class="relative flex items-center justify-center w-16 h-16">
-                        <span
-                            class="absolute inline-flex rounded-full opacity-75 size-10 bg-emerald-400 animate-ping"></span>
-                        <span
-                            class="relative inline-flex items-center justify-center text-2xl font-bold text-white rounded-full size-12 bg-emerald-500">
-                            🫶
-                            </svg>
-                        </span>
+                        <span class="absolute inline-flex rounded-full opacity-50 size-14 bg-emerald-400 animate-ping"></span>
+                        <img src="/logo.png" class="relative size-12">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="font-serif text-lg font-semibold text-slate-900">Creating your listening party</p>
                         <p class="mt-1 text-sm text-slate-600">
-                            The awwd.io room <span class="font-bold"> {{ $listeningParty->name }}</span> is being put
+                            The TogetherCast.io room <span class="font-bold"> {{ $listeningParty->name }}</span> is being put
                             together...
                         </p>
                     </div>
@@ -251,14 +262,17 @@ new class extends Component {
     @elseif($isFinished)
         <div class="flex items-center justify-center min-h-screen bg-emerald-50">
             <div class="w-full max-w-2xl p-8 mx-8 text-center bg-white rounded-lg shadow-lg">
-                <h2 class="mb-4 font-serif text-2xl font-bold text-slate-900">This listening party has finished 🥲</h2>
-                <p class="mt-2 text-slate-600">The awwd.io room <span
+                <div class="flex justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-12 text-slate-300"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                </div>
+                <h2 class="mb-4 font-serif text-2xl font-bold text-slate-900">This listening party has finished.</h2>
+                <p class="mt-2 text-slate-600">The TogetherCast.io room <span
                         class="font-bold">{{ $listeningParty->name }}</span> is no longer live.
                 </p>
             </div>
         </div>
     @else
-        <audio x-ref="audioPlayer" :src="'{{ $listeningParty->episode->media_url }}'" preload="auto"></audio>
+        <audio wire:ignore x-ref="audioPlayer" :src="'{{ $listeningParty->episode->media_url }}'" preload="auto"></audio>
 
 
         <div x-show="!isLive" class="flex items-center justify-center min-h-screen bg-emerald-50" x-cloak>
@@ -292,7 +306,7 @@ new class extends Component {
 
                 <h2 x-show="isReady"
                     class="mt-8 font-serif text-lg tracking-tight text-center text-slate-900 font-bolder">
-                    Ready to start the awwd.io party! Stay tuned. 🫶</h2>
+                    Ready to start the TogetherCast.io party! Stay tuned.</h2>
 
                 <div class="flex items-center justify-end mt-8">
                     <button @click="copyToClipboard();"
@@ -356,12 +370,12 @@ new class extends Component {
                                 </div>
                                 <div class="h-2 rounded-full bg-emerald-100">
                                     <div class="h-2 rounded-full bg-emerald-500"
-                                        :style="`width: ${(currentTime / audio.duration) * 100}%`"></div>
+                                        :style="audioDuration ? `width: ${(currentTime / audioDuration) * 100}%` : 'width: 0%'"></div>
                                 </div>
                             </div>
 
                             <div x-show="!isPlaying" class="mt-6">
-                                <x-button class="w-full" primary label="Join Listening Party" />
+                                <x-button class="w-full" primary label="Join Listening Party" @click="joinAndBeReady()" />
                             </div>
                         </div>
 
