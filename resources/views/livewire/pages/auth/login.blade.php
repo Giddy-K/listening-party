@@ -19,7 +19,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
         Session::regenerate();
 
-        $this->redirect(session()->pull('auth_redirect', route('home', absolute: false)), navigate: true);
+        $this->redirect(session()->pull('auth_redirect', route('dashboard', absolute: false)), navigate: true);
     }
 }; ?>
 
