@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Volt\Component;
 use Livewire\Attributes\Validate;
 use App\Models\ListeningParty;
@@ -43,7 +44,7 @@ new class extends Component {
     public function with()
     {
         return [
-            'listeningParties' => ListeningParty::where('is_active', true)->whereNotNull('end_time')->where('end_time', '>', now())->orderBy('start_time', 'asc')->with('episode.podcast')->get(),
+            'listeningParties' => ListeningParty::where('is_active', DB::raw('true'))->whereNotNull('end_time')->where('end_time', '>', now())->orderBy('start_time', 'asc')->with('episode.podcast')->get(),
         ];
     }
 
