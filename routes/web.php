@@ -1,12 +1,22 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::view('/', 'home')->name('home');
 
-Volt::route('/dashboard', 'dashboard')->name('dashboard');
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect('/');
+})->middleware('auth')->name('logout');
 
-Volt::route('/parties/{listeningParty}', 'pages.parties.show')->name('parties.show');
+Route::middleware('auth')->group(function () {
+    Volt::route('/dashboard', 'dashboard')->name('dashboard');
+    Volt::route('/parties/{listeningParty}', 'pages.parties.show')->name('parties.show');
+});
 
 require __DIR__.'/auth.php';
