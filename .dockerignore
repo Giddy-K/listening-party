@@ -9,4 +9,3 @@ storage/framework/views/*
 bootstrap/cache/*
 public/hot
 *.sqlite
-docker
