@@ -12,6 +12,7 @@ new class extends Component {
     public ListeningParty $listeningParty;
 
     public $userId;
+    public $emojis = [];
 
     public $isFinished = false;
 
@@ -107,6 +108,7 @@ new class extends Component {
     endTimestamp: {{ $listeningParty->end_time ? $listeningParty->end_time->timestamp : 'null' }},
     copyNotification: false,
     emojis: [],
+    userId: {{ json_encode($userId) }},
     addEmoji(emoji, event) {
         this.showEmoji({ id: Date.now(), emoji, x: event.clientX, y: event.clientY });
         $wire.sendEmoji(emoji);
