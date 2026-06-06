@@ -102,6 +102,7 @@ new class extends Component {
 
 <div x-data="{
     audio: null,
+    syncInterval: null,
     isLoading: true,
     isLive: false,
     isPlaying: false,
@@ -166,6 +167,8 @@ new class extends Component {
     },
 
     finishListeningParty() {
+        clearInterval(this.syncInterval);
+        this.syncInterval = null;
         $wire.finish();
         this.isPlaying = false;
         if (this.audio) {
@@ -204,7 +207,7 @@ new class extends Component {
         const audio = this.$refs.audioPlayer || this.audio;
         if (!audio) return;
         this.audio = audio;
-        const now = Math.floor(Date.now() / 1000);
+        const now = Date.now() / 1000;
         const elapsedTime = Math.max(0, now - this.startTimestamp);
         audio.currentTime = elapsedTime;
         audio.play().catch(error => {
@@ -213,6 +216,19 @@ new class extends Component {
             this.isReady = false;
             this.playBlocked = true;
         });
+        this.startSync();
+    },
+
+    startSync() {
+        if (this.syncInterval) return;
+        this.syncInterval = setInterval(() => {
+            if (!this.audio || !this.isPlaying || this.isFinished) return;
+            const expected = (Date.now() / 1000) - this.startTimestamp;
+            const drift = this.audio.currentTime - expected;
+            if (Math.abs(drift) > 2) {
+                this.audio.currentTime = expected;
+            }
+        }, 5000);
     },
 
     joinAndBeReady() {
