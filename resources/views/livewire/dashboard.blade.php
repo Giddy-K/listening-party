@@ -16,6 +16,11 @@ new class extends Component {
     #[Validate('required|url')]
     public string $mediaUrl = '';
 
+    public function deleteParty(int $id): void
+    {
+        ListeningParty::where('id', $id)->delete();
+    }
+
     public function createListeningParty()
     {
         $this->validate();
@@ -76,26 +81,26 @@ new class extends Component {
                             const d = new Date(this.raw);
                             if (isNaN(d)) return '';
                             return new Intl.DateTimeFormat('en', {
-                                weekday: 'short',
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
+                                weekday: 'short', year: 'numeric', month: 'short',
+                                day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
                             }).format(d);
+                        },
+                        syncToWire() {
+                            if (!this.raw) return;
+                            const d = new Date(this.raw);
+                            if (!isNaN(d)) $wire.set('startTime', d.toISOString());
                         }
                     }">
                         <label class="block mb-1 text-xs font-medium text-slate-500">Start Time</label>
                         <input
                             type="datetime-local"
                             x-model="raw"
-                            wire:model="startTime"
+                            @change="syncToWire()"
                             min="{{ now()->format('Y-m-d\TH:i') }}"
                             class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-text"
                         >
                         <p x-show="raw" class="mt-1 text-xs font-medium text-emerald-600" x-text="'→ ' + formatted()"></p>
-                        <p x-show="!raw" class="mt-1 text-xs text-slate-400">Click any field then scroll or type. Preview shows in AM/PM.</p>
+                        <p x-show="!raw" class="mt-1 text-xs text-slate-400">Click any field then scroll or type. Preview shows exact time in AM/PM.</p>
                     </div>
                     <x-button type="submit" class="w-full">Create Listening Party</x-button>
                 </form>
@@ -114,68 +119,67 @@ new class extends Component {
                     </div>
                 @else
                     @foreach ($listeningParties as $listeningParty)
-                        <div wire:key="{{ $listeningParty->id }}">
-                            <a href="{{ route('parties.show', $listeningParty) }}" class="block">
-                                <div
-                                    class="flex items-center justify-between p-4 transition-all duration-150 ease-in-out border-b border-gray-200 hover:bg-gray-50">
-                                    <div class="flex items-center space-x-4">
-                                        <div class="flex-shrink-0">
-                                            <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}"
-                                                size="xl" rounded="sm" alt="Podcast Artwork" />
+                        <div wire:key="{{ $listeningParty->id }}"
+                            class="flex items-center justify-between p-4 border-b border-gray-200 hover:bg-gray-50 transition-all duration-150 ease-in-out">
+                            <a href="{{ route('parties.show', $listeningParty) }}" class="flex items-center space-x-4 flex-1 min-w-0">
+                                <div class="flex-shrink-0">
+                                    <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}"
+                                        size="xl" rounded="sm" alt="Podcast Artwork" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[0.9rem] font-semibold truncate text-slate-900">
+                                        {{ $listeningParty->name }}</p>
+                                    <div class="mt-0.8">
+                                        <p class="max-w-xs text-sm truncate text-slate-600">
+                                            {{ $listeningParty->episode->title }}</p>
+                                        <p class="text-[0.7rem] tracking-tighter uppercase text-slate-400">
+                                            {{ $listeningParty->podcast->title }}</p>
+                                    </div>
+                                    <div class="mt-1 text-xs text-slate-600" x-data="{
+                                        startTime: {{ $listeningParty->start_time->timestamp }},
+                                        countdownText: '',
+                                        isLive: {{ $listeningParty->start_time->isPast() && $listeningParty->is_active ? 'true' : 'false' }},
+                                        updateCountdown() {
+                                            const now = Math.floor(Date.now() / 1000);
+                                            const timeUntilStart = this.startTime - now;
+                                            if (timeUntilStart <= 0) {
+                                                this.countdownText = 'Live';
+                                                this.isLive = true;
+                                            } else {
+                                                const days = Math.floor(timeUntilStart / 86400);
+                                                const hours = Math.floor((timeUntilStart % 86400) / 3600);
+                                                const minutes = Math.floor((timeUntilStart % 3600) / 60);
+                                                const seconds = timeUntilStart % 60;
+                                                this.countdownText = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                                            }
+                                        }
+                                    }" x-init="updateCountdown(); setInterval(() => updateCountdown(), 1000);">
+                                        <div x-show="isLive">
+                                            <x-badge flat rose label="Live">
+                                                <x-slot name="prepend" class="relative flex items-center w-2 h-2">
+                                                    <span class="absolute inline-flex w-full h-full rounded-full opacity-75 bg-rose-500 animate-ping"></span>
+                                                    <span class="relative inline-flex w-2 h-2 rounded-full bg-rose-500"></span>
+                                                </x-slot>
+                                            </x-badge>
                                         </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-[0.9rem] font-semibold truncate text-slate-900">
-                                                {{ $listeningParty->name }}</p>
-                                            <div class="mt-0.8">
-                                                <p class="max-w-xs text-sm truncate text-slate-600">
-                                                    {{ $listeningParty->episode->title }}</p>
-                                                <p class="text-[0.7rem] tracking-tighter uppercase text-slate-400">
-                                                    {{ $listeningParty->podcast->title }}</p>
-                                            </div>
-                                            <div class="mt-1 text-xs text-slate-600" x-data="{
-                                                startTime: {{ $listeningParty->start_time->timestamp }},
-                                                countdownText: '',
-                                                isLive: {{ $listeningParty->start_time->isPast() && $listeningParty->is_active ? 'true' : 'false' }},
-                                                updateCountdown() {
-                                                    const now = Math.floor(Date.now() / 1000);
-                                                    const timeUntilStart = this.startTime - now;
-                                                    if (timeUntilStart <= 0) {
-                                                        this.countdownText = 'Live';
-                                                        this.isLive = true;
-                                                    } else {
-                                                        const days = Math.floor(timeUntilStart / 86400);
-                                                        const hours = Math.floor((timeUntilStart % 86400) / 3600);
-                                                        const minutes = Math.floor((timeUntilStart % 3600) / 60);
-                                                        const seconds = timeUntilStart % 60;
-                                                        this.countdownText = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-                                                    }
-                                                }
-                                            }"
-                                                x-init="updateCountdown();
-                                                setInterval(() => updateCountdown(), 1000);">
-                                                <div x-show="isLive">
-                                                    <x-badge flat rose label="Live">
-                                                        <x-slot name="prepend"
-                                                            class="relative flex items-center w-2 h-2">
-                                                            <span
-                                                                class="absolute inline-flex w-full h-full rounded-full opacity-75 bg-rose-500 animate-ping"></span>
-
-                                                            <span
-                                                                class="relative inline-flex w-2 h-2 rounded-full bg-rose-500"></span>
-                                                        </x-slot>
-
-                                                    </x-badge>
-
-                                                </div>
-                                                <div x-show="!isLive">
-                                                    Starts in: <span x-text="countdownText"></span>
-                                                </div>
-                                            </div>
+                                        <div x-show="!isLive">
+                                            Starts in: <span x-text="countdownText"></span>
                                         </div>
                                     </div>
-                                    <x-button flat xs class="w-20">Join</x-button>
                                 </div>
                             </a>
+                            <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                                <a href="{{ route('parties.show', $listeningParty) }}" class="px-3 py-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">Join</a>
+                                <button
+                                    wire:click="deleteParty({{ $listeningParty->id }})"
+                                    wire:confirm="Delete this listening party?"
+                                    class="p-1.5 text-slate-300 hover:text-red-500 transition-colors rounded"
+                                    title="Delete party">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4" width="16" height="16">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     @endforeach
                 @endif
