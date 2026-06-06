@@ -18,6 +18,13 @@
 
     <wireui:scripts />
 
+    <script>
+    window._tcConfig = {
+        pusherKey: '{{ env('PUSHER_APP_KEY') }}',
+        pusherCluster: '{{ env('PUSHER_APP_CLUSTER', 'mt1') }}',
+    };
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
