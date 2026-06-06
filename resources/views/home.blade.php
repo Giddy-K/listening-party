@@ -12,6 +12,14 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600|aleo:300,500,700|annie-use-your-telescope:400&display=swap" rel="stylesheet" />
     <style>[x-cloak]{display:none!important}</style>
     <wireui:scripts />
+
+    <script>
+    window._tcConfig = {
+        pusherKey: '{{ env('PUSHER_APP_KEY') }}',
+        pusherCluster: '{{ env('PUSHER_APP_CLUSTER', 'mt1') }}',
+    };
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
