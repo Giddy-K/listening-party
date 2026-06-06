@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -27,7 +27,7 @@ class EmojiReactionEvent implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        return new Channel('listening-party.'.$this->listeningPartyId);
+        return new PrivateChannel('listening-party.'.$this->listeningPartyId);
     }
 
     public function broadcastAs()
