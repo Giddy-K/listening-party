@@ -29,6 +29,7 @@ class ListeningParty extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_private' => 'boolean',
         'start_time' => 'datetime',
         'end_time' => 'datetime',
     ];
