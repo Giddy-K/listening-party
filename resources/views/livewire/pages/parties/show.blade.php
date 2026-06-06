@@ -12,7 +12,6 @@ new class extends Component {
     public ListeningParty $listeningParty;
 
     public $userId;
-    public $emojis = [];
 
     public $isFinished = false;
 
@@ -35,14 +34,6 @@ new class extends Component {
         ];
 
         event(new EmojiReactionEvent($this->listeningParty->id, $newEmoji, $this->userId));
-    }
-
-    #[On('echo-private:listening-party.{listeningParty.id},.emoji-reaction')]
-    public function receiveEmoji($payload)
-    {
-        if ($payload['userId'] !== $this->userId) {
-            $this->emojis[] = $payload['emoji'];
-        }
     }
 
     public function sendMessage()
@@ -115,16 +106,15 @@ new class extends Component {
     startTimestamp: {{ $listeningParty->start_time->timestamp }},
     endTimestamp: {{ $listeningParty->end_time ? $listeningParty->end_time->timestamp : 'null' }},
     copyNotification: false,
-    emojis: @entangle('emojis'),
+    emojis: [],
     addEmoji(emoji, event) {
-        const newEmoji = {
-            id: Date.now(),
-            emoji: emoji,
-            x: event.clientX,
-            y: event.clientY,
-        };
-        this.emojis.push(newEmoji);
+        this.showEmoji({ id: Date.now(), emoji, x: event.clientX, y: event.clientY });
         $wire.sendEmoji(emoji);
+    },
+
+    showEmoji(e) {
+        this.emojis.push(e);
+        setTimeout(() => { this.emojis = this.emojis.filter(x => x.id !== e.id); }, 3000);
     },
 
 
@@ -132,6 +122,14 @@ new class extends Component {
         this.startCountdown();
         if (this.$refs.audioPlayer && !this.isFinished) {
             this.initializeAudioPlayer();
+        }
+        if (window.Echo) {
+            window.Echo.private(`listening-party.{{ $listeningParty->id }}`)
+                .listen('.emoji-reaction', (data) => {
+                    if (String(data.userId) !== String(this.userId)) {
+                        this.showEmoji({ id: data.emoji.id, emoji: data.emoji.emoji, x: data.emoji.x, y: data.emoji.y });
+                    }
+                });
         }
     },
 
