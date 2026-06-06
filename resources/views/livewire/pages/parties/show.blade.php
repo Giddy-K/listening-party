@@ -277,6 +277,14 @@ new class extends Component {
 
         <div x-show="!isLive" class="flex items-center justify-center min-h-screen bg-emerald-50" x-cloak>
             <div class="relative w-full max-w-2xl p-6 bg-white rounded-lg shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5" width="14" height="14">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                        </svg>
+                        Leave party
+                    </a>
+                </div>
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
                         <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}" size="xl"
@@ -342,6 +350,14 @@ new class extends Component {
                     <div class="w-1/2 space-y-6">
                         <!-- Listening Party Info -->
                         <div class="p-6 bg-white rounded-lg shadow-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5" width="14" height="14">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                                    </svg>
+                                    Leave party
+                                </a>
+                            </div>
                             <div class="flex items-center mb-6 space-x-4">
                                 <div class="flex-shrink-0">
                                     <x-avatar src="{{ $listeningParty->episode->podcast->artwork_url }}" size="xl"
