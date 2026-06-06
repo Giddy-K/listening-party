@@ -1,0 +1,50 @@
+services:
+  - type: web
+    name: togethercast
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: BROADCAST_CONNECTION
+        value: pusher
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        value: postgres
+      - key: PUSHER_PORT
+        value: "443"
+      - key: PUSHER_SCHEME
+        value: https
+      # Set these in the Render dashboard → Environment
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: PUSHER_APP_ID
+        sync: false
+      - key: PUSHER_APP_KEY
+        sync: false
+      - key: PUSHER_APP_SECRET
+        sync: false
+      - key: PUSHER_APP_CLUSTER
+        sync: false
