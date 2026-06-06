@@ -2,6 +2,7 @@
 
 use Livewire\Volt\Component;
 use App\Models\ListeningParty;
+use Livewire\Attributes\Renderless;
 use Livewire\Attributes\Validate;
 use App\Events\NewMessageEvent;
 use App\Events\EmojiReactionEvent;
@@ -25,7 +26,8 @@ new class extends Component {
         return redirect()->route('register');
     }
 
-    public function sendEmoji($emoji)
+    #[Renderless]
+    public function sendEmoji($emoji): void
     {
         $newEmoji = [
             'id' => uniqid(),
