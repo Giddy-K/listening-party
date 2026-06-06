@@ -37,7 +37,7 @@ new class extends Component {
             'name' => $this->name,
             'start_time' => $this->startTime,
             'user_id' => auth()->id(),
-            'is_private' => $this->isPrivate,
+            'is_private' => $this->isPrivate ? DB::raw('true') : DB::raw('false'),
         ]);
 
         ProcessPodcastUrl::dispatch($this->mediaUrl, $listeningParty, $episode);
@@ -212,7 +212,7 @@ new class extends Component {
                             </a>
                             <div class="flex items-center gap-2 ml-3 flex-shrink-0">
                                 <a href="{{ route('parties.show', $listeningParty) }}" class="px-3 py-1 text-xs font-medium text-slate-600 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors">Join</a>
-                                @if($listeningParty->user_id === auth()->id())
+                                @if($listeningParty->user_id === null || $listeningParty->user_id === auth()->id())
                                 <button
                                     wire:click="deleteParty({{ $listeningParty->id }})"
                                     wire:confirm="Delete this listening party?"
