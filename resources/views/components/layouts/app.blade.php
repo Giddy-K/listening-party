@@ -22,7 +22,23 @@
 </head>
 
 <body class="bg-emerald-50">
-    <x-button class="absolute z-50 top-4 left-4" xs flat href="/">← Home</x-button>
+    <nav class="flex items-center justify-between px-6 py-3 bg-white border-b border-emerald-100 shadow-sm">
+        <a href="{{ route('home') }}" class="flex items-center gap-2 font-cursive text-lg text-slate-800 hover:opacity-80 transition-opacity">
+            <img src="/logo.png" class="h-7 w-7 shrink-0 object-contain aspect-square" width="28" height="28">
+            TogetherCast.io
+        </a>
+        @auth
+        <div class="flex items-center gap-4">
+            <span class="text-sm text-slate-500">{{ Auth::user()->name }}</span>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="text-sm font-medium text-slate-500 hover:text-red-600 transition-colors">
+                    Log out
+                </button>
+            </form>
+        </div>
+        @endauth
+    </nav>
     {{ $slot }}
 </body>
 
