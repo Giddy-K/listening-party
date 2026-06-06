@@ -57,14 +57,21 @@
             TogetherCast.io lets you create a listening party for any podcast episode. Share a link, start at the same moment, and react together in real time.
         </p>
         <div class="mt-10 flex items-center justify-center gap-4">
-            <a href="{{ route('register') }}" x-data="{ loading: false }" @click="loading = true" :class="loading ? 'opacity-75 cursor-wait' : ''" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
-                <svg x-show="loading" class="animate-spin h-5 w-5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                <span>Create a listening party</span>
-            </a>
-            <a href="{{ route('login') }}" x-data="{ loading: false }" @click="loading = true" :class="loading ? 'opacity-75 cursor-wait' : ''" class="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
-                <svg x-show="loading" class="animate-spin h-5 w-5 text-slate-500" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                <span>Log in</span>
-            </a>
+            @auth
+                <a href="{{ route('dashboard') }}" x-data="{ loading: false }" @click="loading = true" :class="loading ? 'opacity-75 cursor-wait' : ''" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                    <svg x-show="loading" class="animate-spin h-5 w-5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span>Go to Dashboard</span>
+                </a>
+            @else
+                <a href="{{ route('register') }}" x-data="{ loading: false }" @click="loading = true" :class="loading ? 'opacity-75 cursor-wait' : ''" class="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                    <svg x-show="loading" class="animate-spin h-5 w-5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span>Create a listening party</span>
+                </a>
+                <a href="{{ route('login') }}" x-data="{ loading: false }" @click="loading = true" :class="loading ? 'opacity-75 cursor-wait' : ''" class="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
+                    <svg x-show="loading" class="animate-spin h-5 w-5 text-slate-500" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span>Log in</span>
+                </a>
+            @endauth
         </div>
     </section>
 
