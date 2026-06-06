@@ -6,20 +6,17 @@ use App\Models\Podcast;
 use Carbon\CarbonInterval;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ProcessPodcastUrl implements ShouldQueue
 {
     use Queueable;
 
     public $rssUrl;
-
     public $listeningParty;
-
     public $episode;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct($rssUrl, $listeningParty, $episode)
     {
         $this->rssUrl = $rssUrl;
@@ -27,88 +24,73 @@ class ProcessPodcastUrl implements ShouldQueue
         $this->episode = $episode;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-        // grab the podcast name information
-        // grab the latest episode
-        // add the latest episode media url to the existing episode
-        // update the existing episode's media url to the latest episode's media url
-        // find the episodes length and set the listening end_time to the start_time + length of the episode
-
-        $xml = simplexml_load_file($this->rssUrl);
-
-        $podcastTitle = $xml->channel->title;
-        $podcastArtworkUrl = $xml->channel->image->url;
-
-        $latestEpisode = $xml->channel->item[0];
-
-        $episodeTitle = $latestEpisode->title;
-        $episodeMediaUrl = (string) $latestEpisode->enclosure['url'];
-
-        // register the itunes namespace to grab the duration
-        $namespaces = $xml->getNamespaces(true);
-        $itunesNamespace = $namespaces['itunes'] ?? null;
-
-        $episodeLength = null;
-
-        // Try to get duration from iTunes namespace
-        if ($itunesNamespace) {
-            $episodeLength = (string) $latestEpisode->children($itunesNamespace)->duration;
-        }
-
-        // If iTunes namespace is not available or duration is empty, calculate from file size
-        if (empty($episodeLength)) {
-            $fileSize = (int) $latestEpisode->enclosure['length'];
-            $bitrate = 128000; // Assume 128 kbps as standard podcast bitrate
-            $durationInSeconds = ceil($fileSize * 8 / $bitrate);
-            $episodeLength = (string) $durationInSeconds;
-        }
-
-        // Parse the duration
         try {
-            if (strpos($episodeLength, ':') !== false) {
-                // Duration is in HH:MM:SS or MM:SS format
-                $parts = explode(':', $episodeLength);
-                if (count($parts) == 2) {
-                    $interval = CarbonInterval::createFromFormat('i:s', $episodeLength);
-                } elseif (count($parts) == 3) {
-                    $interval = CarbonInterval::createFromFormat('H:i:s', $episodeLength);
-                } else {
-                    throw new \Exception('Unexpected duration format');
-                }
-            } else {
-                // Duration is in seconds
-                $interval = CarbonInterval::seconds((int) $episodeLength);
+            $response = Http::timeout(15)->get($this->rssUrl);
+
+            if (!$response->successful()) {
+                throw new \Exception("RSS fetch failed: HTTP {$response->status()}");
             }
-        } catch (\Exception $e) {
-            Log::error('Error parsing episode duration: '.$e->getMessage());
-            $interval = CarbonInterval::hour(); // Default to 1 hour if parsing fails
+
+            $xml = simplexml_load_string($response->body());
+
+            if (!$xml) {
+                throw new \Exception('Failed to parse RSS XML');
+            }
+
+            $podcastTitle = (string) $xml->channel->title;
+            $podcastArtworkUrl = (string) $xml->channel->image->url;
+            $latestEpisode = $xml->channel->item[0];
+            $episodeTitle = (string) $latestEpisode->title;
+            $episodeMediaUrl = (string) $latestEpisode->enclosure['url'];
+
+            $namespaces = $xml->getNamespaces(true);
+            $itunesNamespace = $namespaces['itunes'] ?? null;
+            $episodeLength = null;
+
+            if ($itunesNamespace) {
+                $episodeLength = (string) $latestEpisode->children($itunesNamespace)->duration;
+            }
+
+            if (empty($episodeLength)) {
+                $fileSize = (int) $latestEpisode->enclosure['length'];
+                $durationInSeconds = $fileSize > 0 ? (int) ceil($fileSize * 8 / 128000) : 3600;
+                $episodeLength = (string) $durationInSeconds;
+            }
+
+            $interval = $this->parseDuration($episodeLength);
+
+            $podcast = Podcast::updateOrCreate(
+                ['rss_url' => $this->rssUrl],
+                ['title' => $podcastTitle, 'artwork_url' => $podcastArtworkUrl]
+            );
+
+            $this->episode->podcast()->associate($podcast);
+            $this->episode->update(['title' => $episodeTitle, 'media_url' => $episodeMediaUrl]);
+            $this->listeningParty->update(['end_time' => $this->listeningParty->start_time->add($interval)]);
+
+        } catch (\Throwable $e) {
+            Log::error('ProcessPodcastUrl failed', ['url' => $this->rssUrl, 'error' => $e->getMessage()]);
+            // Set a 1-hour fallback so the party isn't stuck on "creating..."
+            $this->listeningParty->update(['end_time' => $this->listeningParty->start_time->addHour()]);
         }
+    }
 
-        $endTime = $this->listeningParty->start_time->add($interval);
-
-        // save these to the database
-        // create the Podcast, and then upate the episode to be linked to the podcast
-
-        $podcast = Podcast::updateOrCreate([
-            'title' => $podcastTitle,
-            'artwork_url' => $podcastArtworkUrl,
-            'rss_url' => $this->rssUrl,
-        ]);
-
-        $this->episode->podcast()->associate($podcast);
-
-        $this->episode->update([
-            'title' => $episodeTitle,
-            'media_url' => $episodeMediaUrl,
-        ]);
-
-        $this->listeningParty->update([
-            'end_time' => $endTime,
-        ]);
-
+    private function parseDuration(string $episodeLength): CarbonInterval
+    {
+        try {
+            if (str_contains($episodeLength, ':')) {
+                $parts = explode(':', $episodeLength);
+                return match(count($parts)) {
+                    2 => CarbonInterval::createFromFormat('i:s', $episodeLength),
+                    3 => CarbonInterval::createFromFormat('H:i:s', $episodeLength),
+                    default => CarbonInterval::hour(),
+                };
+            }
+            return CarbonInterval::seconds((int) $episodeLength);
+        } catch (\Throwable) {
+            return CarbonInterval::hour();
+        }
     }
 }

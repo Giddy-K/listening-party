@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Volt\Component;
 use App\Models\ListeningParty;
 use Livewire\Attributes\Renderless;
@@ -62,7 +63,7 @@ new class extends Component {
 
     public function finish(): void
     {
-        $this->listeningParty->update(['is_active' => false]);
+        $this->listeningParty->update(['is_active' => DB::raw('false')]);
         $this->isFinished = true;
     }
 
