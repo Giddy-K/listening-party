@@ -69,8 +69,34 @@ new class extends Component {
                     <x-input wire:model='name' placeholder="Listening Party Name" />
                     <x-input wire:model='mediaUrl' placeholder="Podcast RSS Feed URL"
                         description="Entering the RSS Feed URL will grab the latest episode" />
-                    <x-datetime-picker wire:model='startTime' placeholder="Listening Party Start Time"
-                        :min="now()->subDays(1)" />
+                    <div x-data="{
+                        raw: '',
+                        formatted() {
+                            if (!this.raw) return '';
+                            const d = new Date(this.raw);
+                            if (isNaN(d)) return '';
+                            return new Intl.DateTimeFormat('en', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            }).format(d);
+                        }
+                    }">
+                        <label class="block mb-1 text-xs font-medium text-slate-500">Start Time</label>
+                        <input
+                            type="datetime-local"
+                            x-model="raw"
+                            wire:model="startTime"
+                            min="{{ now()->format('Y-m-d\TH:i') }}"
+                            class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-text"
+                        >
+                        <p x-show="raw" class="mt-1 text-xs font-medium text-emerald-600" x-text="'→ ' + formatted()"></p>
+                        <p x-show="!raw" class="mt-1 text-xs text-slate-400">Click any field then scroll or type. Preview shows in AM/PM.</p>
+                    </div>
                     <x-button type="submit" class="w-full">Create Listening Party</x-button>
                 </form>
             </x-card>
